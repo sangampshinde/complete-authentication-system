@@ -1,0 +1,28 @@
+{
+  "name": "complete-authentication-system",
+  "version": "1.0.0",
+  "description": "Production-ready full stack authentication system built with Next.js, NestJS and PostgreSQL. Implements JWT access &amp; refresh tokens, role-based access control, protected routes, secure password hashing, session handling and scalable modular backend architecture following real-world security practices.",
+  "main": "backend/index.js",
+  "scripts": {
+    "dev": "nodemon backend/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "module",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "crypto": "^1.0.1",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mailtrap": "^4.4.0",
+    "pg": "^8.20.0",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.28"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

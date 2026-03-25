@@ -1,12 +1,13 @@
 import AppDataSource from "../data-source.js";
 import bcryptjs from "bcryptjs";
+import crypto from 'crypto';
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
-import {sendVerificationEmail,sendWelcomeEmail} from "../mailtrap/email.js"
+import {sendVerificationEmail,sendWelcomeEmail,sendPasswordResetEmail} from "../mailtrap/email.js"
 import { MoreThanOrEqual } from "typeorm";
 
 export const signup = async (req, res) => {
 
-    const { email,password,name } = req.body
+    const { email, password, name } = req.body
 
     try {
 
@@ -60,6 +61,46 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
 
+    const { email, password } = req.body;
+
+    try {
+
+        const userRepository = AppDataSource.getRepository("User");
+
+        const user = await userRepository.findOne({
+            where: { email },
+        });
+
+        if (!user) {
+			return res.status(400).json({ success: false, message: "Invalid credentials" });
+		}
+
+        const isPasswordValid = await bcryptjs.compare(password, user.password);
+
+        if (!isPasswordValid) {
+			return res.status(400).json({ success: false, message: "Invalid credentials" });
+		}
+
+        generateTokenAndSetCookie(res, user._id);
+
+        user.lastLogin = new Date();
+
+       await userRepository.save(user);
+
+       const { password: _, ...userWithoutPassword } = user;
+
+       res.status(200).json({
+            success: true,
+			message: "Logged in successfully",
+            user: userWithoutPassword,
+       })
+  
+    } catch (error) {
+        console.log("Error in login ", error);
+        res.status(400).json({ success: false, message: error.message });
+    }
+
+
 }
 
 export const logout = async (req, res) => {
@@ -106,5 +147,47 @@ export const verifyEmail = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error" });
     }
     
+}
+
+export const forgotPassword = async (req, res) => {
+
+    const { email } = req.body;
+
+    try {
+
+        const userRepository = AppDataSource.getRepository("User");
+
+        const user = await userRepository.findOne({
+            where: { email },
+        });
+
+        if (!user) {
+			return res.status(400).json({ success: false, message: "User not found" });
+		}
+
+        // Generate reset token
+        const resetToken = crypto.randomBytes(20).toString("hex");
+        const resetTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+        user.resetPasswordToken = resetToken;
+		user.resetPasswordExpiresAt = resetTokenExpiresAt;
+
+        await userRepository.save(user);
+
+        // send email
+        await sendPasswordResetEmail(user.email, `${process.env.CLIENT_URL}/reset-password/${resetToken}`)
+
+        res.status(200).json({ success: true, message: "Password reset link sent to your email" });
+
+
+        
+    } catch (error) {
+
+        console.log("Error in forgotPassword ", error);
+		res.status(400).json({ success: false, message: error.message });
+        
+    }
+
+
 }
 
