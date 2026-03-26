@@ -1,7 +1,5 @@
 # ignore files and folders
 
 /node_modules
-
-
-# env
 .env
+
