@@ -2,8 +2,8 @@ import AppDataSource from "../data-source.js";
 import bcryptjs from "bcryptjs";
 import crypto from 'crypto';
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
-import {sendVerificationEmail,sendWelcomeEmail,sendPasswordResetEmail} from "../mailtrap/email.js"
-import { MoreThanOrEqual } from "typeorm";
+import {sendVerificationEmail,sendWelcomeEmail,sendPasswordResetEmail,sendResetSuccessEmail} from "../mailtrap/email.js"
+import { MoreThan, MoreThanOrEqual } from "typeorm";
 
 export const signup = async (req, res) => {
 
@@ -191,3 +191,73 @@ export const forgotPassword = async (req, res) => {
 
 }
 
+export const resetPassword = async (req, res) => {
+
+    try {
+
+        const { token } = req.params;
+		const { password } = req.body;
+
+        const userRepository = AppDataSource.getRepository("User");
+
+        const user = await userRepository.findOne({
+        where: {
+            resetPasswordToken: token,
+            resetPasswordExpiresAt: MoreThan(new Date()),
+        },
+        });
+
+        if (!user) {
+			return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
+		}
+
+        const hashedPassword = await bcryptjs.hash(password, 10);
+        user.password = hashedPassword;
+        user.resetPasswordToken = null;
+        user.resetPasswordExpiresAt = null;
+
+        await userRepository.save(user);
+
+        await sendResetSuccessEmail(user.email);
+
+        res.status(200).json({ success: true, message: "Password reset successful" });
+        
+    } catch (error) {
+
+        console.log("Error in resetPassword ", error);
+		res.status(400).json({ success: false, message: error.message });
+        
+    }
+
+}
+
+export const checkAuth = async (req, res) => {
+    try {
+        const userRepository = AppDataSource.getRepository("User");
+
+        const user = await userRepository.findOne({
+          where: { id: req.userId },
+        });
+
+        if (!user) {
+			return res.status(400).json({ success: false, message: "User not found" });
+		}
+
+        const { password, ...safeUser } = user;
+
+         res.status(200).json({ success: true, user: safeUser });
+
+
+
+
+        
+    } catch (error) {
+
+        console.log("Error in checkAuth ", error);
+		res.status(400).json({ success: false, message: error.message });
+        
+    }
+}
+
+
+ 

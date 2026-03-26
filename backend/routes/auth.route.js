@@ -1,5 +1,6 @@
 import express from 'express'
-import { login, logout, signup,verifyEmail,forgotPassword } from '../controllers/auth.controller.js'
+import { login, logout, signup,verifyEmail,forgotPassword,resetPassword,checkAuth } from '../controllers/auth.controller.js'
+import { verifyToken } from '../middleware/verifyToken.js'
 
 const router = express.Router()
 
@@ -20,6 +21,11 @@ router.post("/forgot-password", forgotPassword);
 
 // RESET PASSWORD
 router.post("/reset-password/:token", resetPassword);
+
+// 
+router.get("/check-auth", verifyToken, checkAuth);
+
+
 
 
 
