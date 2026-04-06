@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from "react-router-dom"; 
 
 import './App.css'
@@ -6,9 +6,65 @@ import FloatingShape from './components/FloatingShape.jsx'
 import SignUpPage from './pages/SignUpPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import EmailVerificationPage from './pages/EmailVerificationPage.jsx';
+import { Toaster } from "react-hot-toast";
+import { useAuthStore } from './store/authStore.js';
+
+
+// protect routes that require authentication
+const ProtectedRoute = ({ children }) => {
+
+  const { isAuthenticated, user } = useAuthStore();
+
+  if (!isAuthenticated) {
+		return <Navigate to='/login' replace />;
+	}
+
+  if (!user.isVerified) {
+		return <Navigate to='/verify-email' replace />;
+	}
+
+  return children;
+
+
+}
+
+
+
+
+
+
+// redirect authenticated users to the home page
+const RedirectAuthenticatedUser = ({ children }) => {
+
+	const { isAuthenticated, user } = useAuthStore();
+
+	if (isAuthenticated && user.isVerified) {
+		return <Navigate to='/' replace />;
+	}
+
+	return children;
+};
+
+
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
+  const { isCheckingAuth, checkAuth ,isAuthenticated,user} = useAuthStore();
+
+  useEffect(() => {
+		checkAuth();
+	}, [checkAuth]);
+
+  console.log("user",user)
+  console.log("isAuthenticated",isAuthenticated)
+
+
+
+
+
+
+
+
 
   return (
    <>
@@ -31,12 +87,20 @@ function App() {
 
          <Route
         path="/signup"
-        element={<SignUpPage/>}
+        element={
+          <RedirectAuthenticatedUser>
+            <SignUpPage/>
+          </RedirectAuthenticatedUser>
+        }
         />
 
          <Route
         path="/login"
-        element={<LoginPage/>}
+        element={
+						<RedirectAuthenticatedUser>
+							<LoginPage />
+						</RedirectAuthenticatedUser>
+					}
         />
 
         <Route path='/verify-email' element={<EmailVerificationPage />} />
@@ -46,13 +110,9 @@ function App() {
 
 
       </Routes>
-
+      <Toaster />
 
     </div>
-   
-   
-   
-   
    </>
   )
 }
