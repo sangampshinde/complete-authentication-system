@@ -8,6 +8,10 @@ import LoginPage from './pages/LoginPage.jsx'
 import EmailVerificationPage from './pages/EmailVerificationPage.jsx';
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from './store/authStore.js';
+import DashboardPage from './pages/DashboardPage.jsx';
+import LoadingSpinner from './components/LoadingSpinner.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 
 
 // protect routes that require authentication
@@ -48,15 +52,20 @@ const RedirectAuthenticatedUser = ({ children }) => {
 
 
 function App() {
+
   const [count, setCount] = useState(0);
+
   const { isCheckingAuth, checkAuth ,isAuthenticated,user} = useAuthStore();
 
   useEffect(() => {
 		checkAuth();
 	}, [checkAuth]);
 
-  console.log("user",user)
-  console.log("isAuthenticated",isAuthenticated)
+
+  if (isCheckingAuth) return <LoadingSpinner />;
+
+  // console.log("user",user)
+  // console.log("isAuthenticated",isAuthenticated)
 
 
 
@@ -82,10 +91,14 @@ function App() {
       <Routes>
         <Route
         path="/"
-        element={"home"}
+        element={
+        <ProtectedRoute>
+            <DashboardPage/>
+        </ProtectedRoute>
+        }
         />
 
-         <Route
+        <Route
         path="/signup"
         element={
           <RedirectAuthenticatedUser>
@@ -103,10 +116,24 @@ function App() {
 					}
         />
 
-        <Route path='/verify-email' element={<EmailVerificationPage />} />
+        <Route path='/verify-email' element={<EmailVerificationPage/>} />
 
-        
+        <Route path='/forgot-password'
+         element={
+						<RedirectAuthenticatedUser>
+							<ForgotPasswordPage />
+						</RedirectAuthenticatedUser>
+					}  
+        />
 
+        <Route 
+         path='/reset-password/:token'
+          element={
+						<RedirectAuthenticatedUser>
+							<ResetPasswordPage />
+						</RedirectAuthenticatedUser>
+					}  
+        />
 
 
       </Routes>
