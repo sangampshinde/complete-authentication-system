@@ -5,6 +5,9 @@ import cookieParser from "cookie-parser";
 dotenv.config();
 import AppDataSource from "./data-source.js";
 import authRoutes from "./routes/auth.route.js";
+import path from "path";
+
+
 
 const app = express();
 
@@ -12,7 +15,9 @@ app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json())
 app.use(cookieParser());
 
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 5000;
+const __dirname = path.resolve();
+
 
 console.log("process.env.PORT",process.env.PORT)
 
@@ -23,6 +28,21 @@ app.get("/", async (req, res) => {
 
 // AUTH ROUTES
 app.use("/api/auth", authRoutes);
+
+
+if (process.env.NODE_ENV === "production") {
+	app.use(express.static(path.join(__dirname, "/frontend/dist")));
+
+	app.get("*", (req, res) => {
+		res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+	});
+}
+
+
+
+
+
+
 
 // START DB + SERVER
 const startServer = async () => {
