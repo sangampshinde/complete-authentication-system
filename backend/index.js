@@ -22,7 +22,7 @@ const __dirname = path.resolve();
 console.log("process.env.PORT",process.env.PORT)
 
 app.get("/", async (req, res) => {
-  res.send(result.rows);
+  // res.send(result.rows);
   res.send("Hello World!");
 });
 
